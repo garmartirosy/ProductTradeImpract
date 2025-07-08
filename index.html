@@ -1,105 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>Product Trade Impact Table</title>
-
   <!-- Tabulator CSS -->
   <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
-  <!-- Tabulator JS -->
-  <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 30px;
-      background: #f9f9f9;
+      padding: 20px;
     }
-    h2, h3 {
+    h1 {
       text-align: center;
     }
     #table {
-      margin-bottom: 40px;
+      margin-top: 20px;
     }
     #chart-container {
-      width: 90%;
+      margin-top: 60px;
       max-width: 800px;
-      margin: auto;
+      margin-left: auto;
+      margin-right: auto;
     }
   </style>
 </head>
 <body>
 
-  <h2>Product Trade Impact Table</h2>
+  <h1>Product Trade Impact Table</h1>
+
   <div id="table"></div>
 
-  <h3>Total Impact by Category</h3>
   <div id="chart-container">
+    <h3 style="text-align:center;">Total Impact by Category</h3>
     <canvas id="impactChart"></canvas>
   </div>
 
-  <script>
-    const apiUrl = "https://function-app-new-me.azurewebsites.net/api/ProductTradeImpact_HTTP_trigger";
+  <!-- Tabulator JS -->
+  <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <script>
     const table = new Tabulator("#table", {
-      layout: "fitDataStretch",
+      height: 500,
+      layout: "fitColumns",
       columns: [
-        { title: "Product Category", field: "productcategory" },
-        { title: "Impact Category", field: "impactcategory" },
-        { title: "Impact Value", field: "impactvalue", hozAlign: "right" },
+        { title: "Product Category", field: "product_category" },
+        { title: "Impact Category", field: "impact_category" },
+        { title: "Impact Value", field: "impact_value" },
         { title: "Unit", field: "unit" },
-        { title: "Year", field: "year", hozAlign: "center" },
-        { title: "From Country", field: "fromcountry" },
-        { title: "To Country", field: "tocountry" }
-      ]
+        { title: "Year", field: "year" },
+        { title: "From Country", field: "from_country" },
+        { title: "To Country", field: "to_country" }
+      ],
     });
 
-    fetch(apiUrl)
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
+    fetch("https://function-app-new-me.azurewebsites.net/api/ProductTradeImpact_HTTP_trigger")
+      .then(response => response.json())
       .then(data => {
-        // Load data into table
         table.setData(data);
 
-        // Prepare data for chart
+        // Aggregate totals by impact_category
         const impactSums = {};
         data.forEach(row => {
-          const cat = row.impactcategory;
-          const val = parseFloat(row.impactvalue) || 0;
-          impactSums[cat] = (impactSums[cat] || 0) + val;
+          const category = row.impact_category || "Unknown";
+          const value = parseFloat(row.impact_value) || 0;
+          impactSums[category] = (impactSums[category] || 0) + value;
         });
 
-        // Labels and values
-        const labels = Object.keys(impactSums);
+        const categories = Object.keys(impactSums);
         const values = Object.values(impactSums);
 
-        // Render chart
-        const ctx = document.getElementById("impactChart").getContext("2d");
+        const ctx = document.getElementById('impactChart').getContext('2d');
         new Chart(ctx, {
-          type: "bar",
+          type: 'bar',
           data: {
-            labels: labels,
+            labels: categories,
             datasets: [{
-              label: "Total Impact Value",
+              label: 'Total Impact',
               data: values,
-              backgroundColor: "rgba(54, 162, 235, 0.6)",
-              borderColor: "rgba(54, 162, 235, 1)",
+              backgroundColor: 'rgba(54, 162, 235, 0.6)',
+              borderColor: 'rgba(54, 162, 235, 1)',
               borderWidth: 1
             }]
           },
           options: {
             responsive: true,
-            plugins: {
-              legend: { display: false },
-              tooltip: { callbacks: { label: ctx => ctx.raw.toLocaleString() } }
-            },
             scales: {
-              y: { beginAtZero: true, title: { display: true, text: "Impact Value" } },
-              x: { title: { display: true, text: "Impact Category" } }
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Impact Value'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Impact Category'
+                }
+              }
             }
           }
         });
