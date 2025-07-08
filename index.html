@@ -1,42 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Product Trade Impact Table</title>
-  <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js"></script>
+
+  <!-- ✅ Tabulator CSS -->
+  <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
+
+  <!-- ✅ Tabulator JS -->
+  <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
+
   <style>
-    body { font-family: Arial; padding: 20px; }
-    #table { margin-top: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f9f9f9;
+    }
+    h2 {
+      text-align: center;
+    }
+    #table {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
+
   <h2>Product Trade Impact Table</h2>
   <div id="table"></div>
 
   <script>
-    // Initialize Tabulator first
+    // ✅ Replace with your actual Azure Function URL
+    const apiUrl = "https://function-app-new-me.azurewebsites.net/api/ProductTradeImpact_HTTP_trigger";
+
+    // Initialize Tabulator
     const table = new Tabulator("#table", {
-      layout: "fitData",
+      layout: "fitDataStretch",
       columns: [
         { title: "Product Category", field: "productcategory" },
         { title: "Impact Category", field: "impactcategory" },
-        { title: "Impact Value", field: "impactvalue" },
+        { title: "Impact Value", field: "impactvalue", hozAlign: "right" },
         { title: "Unit", field: "unit" },
-        { title: "Year", field: "year" },
+        { title: "Year", field: "year", hozAlign: "center" },
         { title: "From Country", field: "fromcountry" },
         { title: "To Country", field: "tocountry" }
       ]
     });
 
-    // Fetch data from Azure Function
-    fetch("https://function-app-new-me.azurewebsites.net/api/ProductTradeImpact_HTTP_trigger")
-      .then(response => response.json())
+    // Fetch and load data
+    fetch(apiUrl)
+      .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
       .then(data => {
-        table.setData(data); // ✅ Set data only after Tabulator is initialized
+        table.setData(data);
       })
       .catch(error => {
         console.error("Error loading data:", error);
       });
   </script>
+
 </body>
 </html>
